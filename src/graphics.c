@@ -10,6 +10,7 @@ bool InitGraphics(void)
 {
     const char *title = "Dark";
     InitWindow(GetScreenWidth(), GetScreenHeight(), title); 
+    SetTargetFPS(60);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
     target_texture = LoadRenderTexture(RENDER_AREA.width, RENDER_AREA.height);
@@ -23,7 +24,6 @@ bool InitGraphics(void)
         TraceLog(LOG_ERROR, "Graphics module failed to initialize target texture");
         return false;
     }
-    return IsRenderTextureReady(target_texture);
 }
 
 void CloseGraphics(void)
