@@ -1,7 +1,15 @@
-#include <stdio.h>
+#include <raylib.h>
+#include <stdlib.h>
+#include "game.h"
 
-int main()
+int main(int argc, const char **argv)
 {
-    printf("Hello, world!\n");
-    return 0;
+    const bool result = StartGame();
+    if (result == false) {
+        TraceLog(LOG_FATAL, "Can't start a game!");
+        return EXIT_FAILURE;
+    }
+    RunGame();
+    CloseGame();
+    return EXIT_SUCCESS;
 }
