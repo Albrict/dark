@@ -8,5 +8,5 @@ typedef struct _RenderArea {
 
 extern const RenderArea RENDER_AREA;
 
-bool InitGraphics(void);
-void CloseGraphics(void);
+[[nodiscard]] bool InitGraphics();
+void CloseGraphics();

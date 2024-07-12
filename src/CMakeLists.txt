@@ -3,4 +3,5 @@ target_sources( main PRIVATE
     "aseprite.c"
     "game.c"
     "graphics.c"
+    "world.c"
     )
