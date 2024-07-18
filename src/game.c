@@ -1,52 +1,82 @@
 #include <raylib.h>
-#include <flecs.h>
-
+#include <string.h>
 #include "game.h"
 #include "graphics.h"
-#include "world.h"
+#include "main_menu.h"
+#include "resource_manager.h"
 
-static void move(ecs_iter_t *it)
-{
-    Rectangle *rect = ecs_field(it, Rectangle, 1);
-    for (int i = 0; i < it->count; ++i)
-        rect[i].x += 10.f * GetFrameTime();
-}
+#define MAX_EVENTS 100
+
+typedef struct Events {
+    GameEvent    events[MAX_EVENTS];
+    unsigned int current_event;
+} Events;
+
+static Events *events  = NULL;
+static bool    running = false;
+
+static void ProccessMessages(void);
 
 bool StartGame(void)
 {
+    events = MemAlloc(sizeof(Events));
+    if (events == NULL)
+        return false;
+    events->current_event = 0;
+
     bool result = InitGraphics();    
     if (result == false)
         return false;
 
-    result = InitWorld();
+    InitAudioDevice();
+    result = LoadResources();
     if (result == false)
         return false;
     
+    running = true;
     return true;
 }
 
 void RunGame(void)
 {
-    auto world = GetWorld();
-    ECS_COMPONENT(world, Rectangle);
-    ECS_SYSTEM(world, move, EcsOnUpdate, Rectangle);
-    auto base = ecs_new(world, Rectangle);
-    ecs_set(world, base, Rectangle, {500.f, 500.f, 200.f, 200.f});
-    while(!WindowShouldClose()) {
-        BeginDrawing();
-        {
+    Scene main_menu = CreateMainMenu();
+    while(running && !WindowShouldClose()) {
+        ProccessMessages();
+        ProccessScene(&main_menu);
+        UpdateScene(&main_menu);
+        BeginRender();
             ClearBackground(BLACK);
-            ProgressWorld(); 
-            const Rectangle *rect = ecs_get(world, base, Rectangle);
-            DrawRectangleRec(*rect, RED);
-        }
-        EndDrawing();
+            DrawScene(&main_menu);
+        EndRender();
     }
+    DestroyScene(&main_menu);
 }
 
 void CloseGame(void)
 {
-    DestroyWorld();
+    CloseAudioDevice();
+    UnloadResources();
     CloseGraphics();
     CloseWindow();
 }
+
+void NotifyGame(const GameEvent event)
+{
+    events->events[events->current_event] = event;
+    ++events->current_event;
+}
+
+static void ProccessMessages(void)
+{
+    for (unsigned int i = events->current_event; i > 0; --i) {
+        GameEvent event = events->events[i];
+        switch(event) {
+        case GAME_EXIT:
+            running = false;    
+            break;
+        default:
+            break;
+        }
+    } 
+}
+

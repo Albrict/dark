@@ -4,6 +4,3 @@
 [submodule "libs/raylib-aseprite"]
 	path = libs/raylib-aseprite
 	url = https://github.com/RobLoach/raylib-aseprite
-[submodule "libs/flecs"]
-	path = libs/flecs
-	url = https://github.com/SanderMertens/flecs.git
