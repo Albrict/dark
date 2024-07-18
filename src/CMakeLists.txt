@@ -3,5 +3,9 @@ target_sources( main PRIVATE
     "aseprite.c"
     "game.c"
     "graphics.c"
-    "world.c"
+    "main_menu.c"
+    "scene.h"
+    "resource_manager.c"
+    "text_button.c"
+    "constants.c"
     )

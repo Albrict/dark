@@ -1,12 +1,17 @@
 #pragma once
-#include <stdbool.h>
+#include <raylib.h>
 
-typedef struct _RenderArea {
-    const int width; 
-    const int height;
+typedef struct RenderArea {
+    const float width; 
+    const float height;
 } RenderArea;
 
 extern const RenderArea RENDER_AREA;
 
-[[nodiscard]] bool InitGraphics();
-void CloseGraphics();
+bool InitGraphics(void);
+void CloseGraphics(void);
+
+void BeginRender(void);
+void EndRender(void);
+
+Vector2 GetCursorPosition(void);
