@@ -5,26 +5,14 @@
 #include <unistd.h>
 #include "dynamic_array.h"
 
-struct DynamicArray {
-    unsigned char *data;
-    unsigned int   size;
-    unsigned int   size_in_bytes;
-    unsigned int   object_size;
-    unsigned int   current_element;
-};
-
-DynamicArray *CreateDynamicArray(const unsigned int object_size, const unsigned int size)
+DynamicArray CreateDynamicArray(const unsigned int object_size, const unsigned int size)
 {
-    DynamicArray *dynamic_array    = NULL;
-    dynamic_array                  = MemAlloc(sizeof(DynamicArray));
-    if (dynamic_array == NULL)
-        return NULL;
-
-    dynamic_array->size            = size;
-    dynamic_array->object_size     = object_size;
-    dynamic_array->size_in_bytes   = size * object_size;
-    dynamic_array->current_element = 0;
-    dynamic_array->data            = MemAlloc(sizeof(unsigned char) * size * object_size);
+    DynamicArray dynamic_array    = {0};
+    dynamic_array.size            = size;
+    dynamic_array.object_size     = object_size;
+    dynamic_array.size_in_bytes   = size * object_size;
+    dynamic_array.current_element = 0;
+    dynamic_array.data            = MemAlloc(sizeof(unsigned char) * size * object_size);
     return dynamic_array;
 }
 
@@ -43,7 +31,7 @@ void *GetDataFromDynamicArray(DynamicArray *dynamic_array, const unsigned int in
     return (dynamic_array->data + index * dynamic_array->object_size);
 }
 
-void PushDataToDynamicArray(DynamicArray *dynamic_array, void *data)
+void PushDataToDynamicArray(DynamicArray *dynamic_array, const void *data)
 {
     const unsigned int object_size = dynamic_array->object_size;
     if (dynamic_array->current_element >= dynamic_array->size - 1) {

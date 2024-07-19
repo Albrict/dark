@@ -17,6 +17,7 @@ typedef enum MainMenuWidgets {
 typedef struct SceneData {
     Rectangle       menu_rect;
     Widget          widgets[4];
+    Widget          settings_widgets[4]; 
     MainMenuWidgets current_choosen_widget;
 } SceneData;
 

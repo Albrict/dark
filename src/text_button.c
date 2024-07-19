@@ -1,7 +1,6 @@
 #include <raylib.h>
 #include <stdlib.h>
 #include "text_button.h"
-#include "graphics.h"
 #include "sound.h"
 #include "widget.h"
 
@@ -24,7 +23,7 @@ static const float TEXT_BUTTON_WIDTH = 150.f;
 static void ProccessTextButton(void *text_button, widget_callback user_callback, 
                                void *user_data)
 {
-    TextButton   *button          = (TextButton*)(text_button);
+    TextButton *button = (TextButton*)(text_button);
     if (button->is_focused == true) {
         if (IsKeyPressed(KEY_ENTER) == true) {
             button->is_pressed = true;
@@ -120,4 +119,10 @@ void TextButtonUnsetFocus(Widget *text_button)
     TextButton *button            = (TextButton*)(text_button->data);
     button->is_focused            = false;
     button->is_focus_sound_played = false;
+}
+
+void TextButtonSetFont(Widget *text_button, const Font *font)
+{
+    TextButton *button = (TextButton*)(text_button->data);
+    button->font       = *font;
 }

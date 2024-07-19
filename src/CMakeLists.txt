@@ -9,4 +9,5 @@ target_sources( main PRIVATE
     "text_button.c"
     "constants.c"
     "dynamic_array.c"
+    "dynamic_string.c"
     )
