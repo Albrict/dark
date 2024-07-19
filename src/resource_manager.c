@@ -2,6 +2,7 @@
 #include <raylib-aseprite.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "dynamic_array.h"
 #include "resource_manager.h"
 
 #define DEFAULT_STORAGE_SIZE 256
@@ -9,8 +10,8 @@
 #define FONT_STORAGE_SIZE 24
 
 typedef struct SoundStorage {
-    Sound        sounds[DEFAULT_STORAGE_SIZE];
-    const char  *names[DEFAULT_STORAGE_SIZE];
+    DynamicArray *sounds;
+    DynamicArray *names;
     unsigned int current_sound;  
 } SoundStorage;
 
@@ -93,17 +94,28 @@ Font GetFont(const char *name)
 
 Sound GetSound(const char *name)
 {
-    for (unsigned int i = 0; i < sound_storage->current_sound; ++i)
-        if (TextIsEqual(name, sound_storage->names[i]) == true)
-            return LoadSoundAlias(sound_storage->sounds[i]);
+    Sound *sound = GetDataFromDynamicArray(sound_storage->sounds, 0);
+    return LoadSoundAlias(*sound);
+//    for (unsigned int i = 0; i < sound_storage->current_sound; ++i) {
+//        const char *sound_name = GetDataFromDynamicArray(sound_storage->names, i); 
+//        if (TextIsEqual(name, sound_name) == true) {
+//            Sound *sound = GetDataFromDynamicArray(sound_storage->sounds, i);
+//            return LoadSoundAlias(*sound);
+//        }
+//    }
     return (Sound){0};
 }
 
 static bool InitStorages(void)
 {
-    sound_storage        = MemAlloc(sizeof(SoundStorage));
-    if (sound_storage == NULL)
+    sound_storage        = MemAlloc(sizeof(SoundStorage)); 
+    if (sound_storage != NULL) {
+        sound_storage->current_sound = 0;
+        sound_storage->sounds = CreateDynamicArray(sizeof(Sound), 50);
+        sound_storage->names  = CreateDynamicArray(sizeof(const char*), 50);
+    } else {
         return false;
+    }
     aseprite_storage     = MemAlloc(sizeof(AsepriteStorage));
     if (aseprite_storage == NULL)
         return false;
@@ -127,8 +139,10 @@ static bool InitStorages(void)
 
 static void DestroyStorages(void)
 {
-    for (unsigned int i = 0; i < sound_storage->current_sound; ++i)
-        UnloadSound(sound_storage->sounds[i]);
+    for (unsigned int i = 0; i < sound_storage->current_sound; ++i) {
+        Sound *sound = GetDataFromDynamicArray(sound_storage->sounds, i);
+        UnloadSound(*sound);
+    }
     for (unsigned int i = 0; i < aseprite_storage->current_aseprite; ++i)
         UnloadAseprite(aseprite_storage->aseprites[i]);
     for (unsigned int i = 0; i < music_storage->current_music; ++i)
@@ -139,10 +153,10 @@ static void DestroyStorages(void)
 
 static bool InsertSound(const char *path, const char *name)
 {
-    const Sound sound = LoadSound(path);
+    Sound sound = LoadSound(path);
     if (IsSoundReady(sound) == true) {
-        sound_storage->sounds[sound_storage->current_sound] = sound;        
-        sound_storage->names[sound_storage->current_sound]  = name;
+        PushDataToDynamicArray(sound_storage->sounds, &sound); 
+        PushDataToDynamicArray(sound_storage->names, &name);
         ++sound_storage->current_sound;
         return true;
     }
