@@ -21,5 +21,6 @@ bool IsTextButtonFocused(const Widget *text_button);
 void TextButtonSetFocus(Widget *text_button);
 void TextButtonUnsetFocus(Widget *text_button);
 void TextButtonPlayAnimation(Widget *text_button);
+void TextButtonSetFont(Widget *text_button, const Font *font);
 
 float GetTextButtonWidth(void);

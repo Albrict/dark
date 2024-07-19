@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "dynamic_array.h"
+#include "dynamic_string.h"
 #include "resource_manager.h"
 
 #define DEFAULT_STORAGE_SIZE 256
@@ -10,37 +11,48 @@
 #define FONT_STORAGE_SIZE 24
 
 typedef struct SoundStorage {
-    DynamicArray *sounds;
-    DynamicArray *names;
+    DynamicArray sounds;
+    DynamicArray names;
     unsigned int current_sound;  
 } SoundStorage;
 
 typedef struct AsepriteStorage {
-    Aseprite    aseprites[DEFAULT_STORAGE_SIZE];
-    const char *names[DEFAULT_STORAGE_SIZE];
+    DynamicArray aseprites;
+    DynamicArray names;
     unsigned int current_aseprite;  
 } AsepriteStorage;
 
 typedef struct AsepriteTagStorage {
-    AsepriteTag aseprite_tags[DEFAULT_STORAGE_SIZE];
-    const char *names[DEFAULT_STORAGE_SIZE];
+    DynamicArray aseprite_tags;
+    DynamicArray names;
     unsigned int current_aseprite_tag;
 } AsepriteTagStorage;
 
 typedef struct MusicStorage {
-    Music music[MUSIC_STORAGE_SIZE];
-    const char *names[MUSIC_STORAGE_SIZE];
+    DynamicArray musics;
+    DynamicArray names;
     unsigned int current_music;
 } MusicStorage;
 
 typedef struct FontStorage {
-    Font fonts[FONT_STORAGE_SIZE];
-    const char *names[FONT_STORAGE_SIZE];
+    DynamicArray fonts;
+    DynamicArray names;
     unsigned int current_font;
 } FontStorage;
 
 static bool InitStorages(void);
+static bool InitSoundStorage(void);
+static bool InitAsepriteStorage(void);
+static bool InitAsepriteTagStorage(void);
+static bool InitMusicStorage(void);
+static bool InitFontStorage(void);
+
 static void DestroyStorages(void);
+static void DestroySoundStorage(void);
+static void DestroyAsepriteStorage(void);
+static void DestroyAsepriteTagStorage(void);
+static void DestroyMusicStorage(void);
+static void DestroyFontStorage(void);
 
 static bool InsertSound(const char *path, const char *name);
 static bool InsertAseprite(const char *path, const char *name);
@@ -49,11 +61,11 @@ static bool InsertMusic(const char *path, const char *name);
 static bool InsertFont(const char *path, const char *name);
 
 //static Font                Becker               = {0};
-static SoundStorage       *sound_storage        = NULL;
-static AsepriteStorage    *aseprite_storage     = NULL;
-static AsepriteTagStorage *aseprite_tag_storage = NULL;
-static MusicStorage       *music_storage        = NULL;
-static FontStorage        *font_storage         = NULL;
+static SoundStorage       sound_storage        = {0};
+static AsepriteStorage    aseprite_storage     = {0};
+static AsepriteTagStorage aseprite_tag_storage = {0};
+static MusicStorage       music_storage        = {0};
+static FontStorage        font_storage         = {0};
 
 bool LoadResources(void)
 {
@@ -86,78 +98,93 @@ void UnloadResources(void)
 
 Font GetFont(const char *name)
 {
-    for (unsigned int i = 0; i < font_storage->current_font; ++i)
-        if (TextIsEqual(name, font_storage->names[i]) == true)
-            return font_storage->fonts[i];
+    for (unsigned int i = 0; i < font_storage.current_font; ++i) {
+        DynamicString *string = GetDataFromDynamicArray(&font_storage.names, i); 
+        if (TextIsEqual(name, GetContents(string)) == true)
+            return *(Font*)GetDataFromDynamicArray(&font_storage.fonts, i);
+    }
     return (Font){0};
 }
 
 Sound GetSound(const char *name)
 {
-    Sound *sound = GetDataFromDynamicArray(sound_storage->sounds, 0);
-    return LoadSoundAlias(*sound);
-//    for (unsigned int i = 0; i < sound_storage->current_sound; ++i) {
-//        const char *sound_name = GetDataFromDynamicArray(sound_storage->names, i); 
-//        if (TextIsEqual(name, sound_name) == true) {
-//            Sound *sound = GetDataFromDynamicArray(sound_storage->sounds, i);
-//            return LoadSoundAlias(*sound);
-//        }
-//    }
+    for (unsigned int i = 0; i < sound_storage.current_sound; ++i) {
+        DynamicString *string = GetDataFromDynamicArray(&sound_storage.names, i); 
+        if (TextIsEqual(name, GetContents(string)) == true) {
+            Sound *sound = GetDataFromDynamicArray(&sound_storage.sounds, i);
+            return LoadSoundAlias(*sound);
+        }
+    }
     return (Sound){0};
 }
 
 static bool InitStorages(void)
 {
-    sound_storage        = MemAlloc(sizeof(SoundStorage)); 
-    if (sound_storage != NULL) {
-        sound_storage->current_sound = 0;
-        sound_storage->sounds = CreateDynamicArray(sizeof(Sound), 50);
-        sound_storage->names  = CreateDynamicArray(sizeof(const char*), 50);
-    } else {
-        return false;
-    }
-    aseprite_storage     = MemAlloc(sizeof(AsepriteStorage));
-    if (aseprite_storage == NULL)
-        return false;
-    aseprite_tag_storage = MemAlloc(sizeof(AsepriteTagStorage));
-    if (aseprite_tag_storage == NULL)
-        return false;
-    music_storage        = MemAlloc(sizeof(MusicStorage));
-    if (music_storage == NULL)
-        return false;
-    font_storage         = MemAlloc(sizeof(FontStorage));
-    if (font_storage == NULL)
-        return false;
+    InitSoundStorage();
+    InitAsepriteStorage();
+    InitAsepriteTagStorage();
+    InitMusicStorage();
+    InitFontStorage();
+    return true;
+}
 
-    sound_storage->current_sound               = 0;
-    aseprite_storage->current_aseprite         = 0;
-    aseprite_tag_storage->current_aseprite_tag = 0; 
-    music_storage->current_music               = 0;
-    font_storage->current_font                 = 0;
+static bool InitSoundStorage(void)
+{
+    sound_storage.current_sound = 0;
+    sound_storage.sounds        = CreateDynamicArray(sizeof(Sound), 50);
+    sound_storage.names         = CreateDynamicArray(sizeof(DynamicString), 50);
+    return true;
+}
+
+static bool InitAsepriteStorage(void)
+{
+    aseprite_storage.current_aseprite = 0;
+    aseprite_storage.aseprites        = CreateDynamicArray(sizeof(Aseprite), 50);
+    aseprite_storage.names            = CreateDynamicArray(sizeof(DynamicString), 50);
+    return true;
+}
+
+static bool InitAsepriteTagStorage(void)
+{
+    aseprite_tag_storage.current_aseprite_tag = 0;
+    aseprite_tag_storage.aseprite_tags        = CreateDynamicArray(sizeof(AsepriteTag), 50);
+    aseprite_tag_storage.names                = CreateDynamicArray(sizeof(DynamicString), 50);
+    return true;
+}
+
+static bool InitMusicStorage(void)
+{
+    music_storage.current_music = 0;
+    music_storage.musics        = CreateDynamicArray(sizeof(Music), 50);
+    music_storage.names         = CreateDynamicArray(sizeof(DynamicString), 50);
+    return true;  
+}
+
+static bool InitFontStorage(void)
+{
+    font_storage.current_font = 0;
+    font_storage.fonts        = CreateDynamicArray(sizeof(Font), 50);
+    font_storage.names        = CreateDynamicArray(sizeof(DynamicString), 50);
     return true;
 }
 
 static void DestroyStorages(void)
 {
-    for (unsigned int i = 0; i < sound_storage->current_sound; ++i) {
-        Sound *sound = GetDataFromDynamicArray(sound_storage->sounds, i);
-        UnloadSound(*sound);
-    }
-    for (unsigned int i = 0; i < aseprite_storage->current_aseprite; ++i)
-        UnloadAseprite(aseprite_storage->aseprites[i]);
-    for (unsigned int i = 0; i < music_storage->current_music; ++i)
-        UnloadMusicStream(music_storage->music[i]);
-    for (unsigned int i = 0; i < font_storage->current_font; ++i)
-        UnloadFont(font_storage->fonts[i]);
+    DestroySoundStorage();
+    DestroyAsepriteStorage();
+    DestroyAsepriteTagStorage();
+    DestroyMusicStorage();
+    DestroyFontStorage();
 }
 
 static bool InsertSound(const char *path, const char *name)
 {
     Sound sound = LoadSound(path);
     if (IsSoundReady(sound) == true) {
-        PushDataToDynamicArray(sound_storage->sounds, &sound); 
-        PushDataToDynamicArray(sound_storage->names, &name);
-        ++sound_storage->current_sound;
+        DynamicString string = CreateString(name);
+        PushDataToDynamicArray(&sound_storage.sounds, &sound); 
+        PushDataToDynamicArray(&sound_storage.names, &string);
+        ++sound_storage.current_sound;
         return true;
     }
     return false;
@@ -167,14 +194,15 @@ static bool InsertAseprite(const char *path, const char *name)
 {
     const Aseprite aseprite = LoadAseprite(path);
     if (IsAsepriteReady(aseprite) == true) {
-        const int tags = GetAsepriteTagCount(aseprite);
+        const DynamicString string = CreateString(name);
+        const int tags             = GetAsepriteTagCount(aseprite);
         if (tags > 0) {
             for (int i = 0; i < tags; ++i)
                 InsertAsepriteTag(&aseprite, i);
         }
-        aseprite_storage->aseprites[aseprite_storage->current_aseprite] = aseprite;        
-        aseprite_storage->names[aseprite_storage->current_aseprite]     = name;
-        ++aseprite_storage->current_aseprite;
+        PushDataToDynamicArray(&aseprite_storage.aseprites, &aseprite);
+        PushDataToDynamicArray(&aseprite_storage.names, &string);
+        ++aseprite_storage.current_aseprite;
         return true;
     }
     return false;
@@ -184,9 +212,10 @@ static bool InsertAsepriteTag(const Aseprite *aseprite, const int id)
 {
     const AsepriteTag aseprite_tag = LoadAsepriteTagFromIndex(*aseprite, id);
     if (IsAsepriteTagReady(aseprite_tag) == true) {
-        aseprite_tag_storage->aseprite_tags[aseprite_tag_storage->current_aseprite_tag] = aseprite_tag;
-        aseprite_tag_storage->names[aseprite_tag_storage->current_aseprite_tag]         = aseprite_tag.name;
-        ++aseprite_tag_storage->current_aseprite_tag;
+        DynamicString string = CreateString(aseprite_tag.name);
+        PushDataToDynamicArray(&aseprite_tag_storage.aseprite_tags, &aseprite_tag);
+        PushDataToDynamicArray(&aseprite_tag_storage.names, &string);
+        ++aseprite_tag_storage.current_aseprite_tag;
         return true;
     } 
     return false;
@@ -196,9 +225,10 @@ static bool InsertMusic(const char *path, const char *name)
 {
     const Music music = LoadMusicStream(path);
     if (IsMusicReady(music) == true) {
-        music_storage->music[music_storage->current_music] = music;        
-        music_storage->names[music_storage->current_music] = name;
-        ++music_storage->current_music;
+        DynamicString string = CreateString(name);
+        PushDataToDynamicArray(&music_storage.musics, &music);
+        PushDataToDynamicArray(&music_storage.names, &string);
+        ++music_storage.current_music;
         return true;
     } 
     return false;
@@ -208,11 +238,72 @@ static bool InsertFont(const char *path, const char *name)
 {
     const Font font = LoadFont(path);
     if (IsFontReady(font) == true) {
-        font_storage->fonts[font_storage->current_font] = font;
-        font_storage->names[font_storage->current_font] = name;
-        ++font_storage->current_font;
+        DynamicString string = CreateString(name);
+        PushDataToDynamicArray(&font_storage.fonts, &font);
+        PushDataToDynamicArray(&font_storage.names, &string);
+        ++font_storage.current_font;
         return true;
     }
     return false;
 }
 
+static void DestroySoundStorage(void)
+{
+    for (unsigned int i = 0; i < sound_storage.current_sound; ++i) {
+        Sound         *sound  = GetDataFromDynamicArray(&sound_storage.sounds, i);
+        DynamicString *string = GetDataFromDynamicArray(&sound_storage.names, i);
+
+        UnloadSound(*sound);
+        DestroyString(string);
+    }
+    DestroyDynamicArray(&sound_storage.sounds);
+    DestroyDynamicArray(&sound_storage.names);
+}
+
+static void DestroyAsepriteStorage(void)
+{
+    for (unsigned int i = 0; i < aseprite_storage.current_aseprite; ++i) {
+        Aseprite      *aseprite = GetDataFromDynamicArray(&aseprite_storage.aseprites, i);
+        DynamicString *string   = GetDataFromDynamicArray(&aseprite_storage.names, i);
+        UnloadAseprite(*aseprite);
+        DestroyString(string);
+    }
+    DestroyDynamicArray(&aseprite_storage.aseprites);
+    DestroyDynamicArray(&aseprite_storage.names);
+}
+
+static void DestroyMusicStorage(void)
+{
+    for (unsigned int i = 0; i < music_storage.current_music; ++i) {
+        Music         *music  = GetDataFromDynamicArray(&music_storage.musics, i);
+        DynamicString *string = GetDataFromDynamicArray(&music_storage.names, i);
+        
+        UnloadMusicStream(*music);
+        DestroyString(string);
+    }
+    DestroyDynamicArray(&music_storage.musics);
+    DestroyDynamicArray(&music_storage.names);
+}
+
+static void DestroyAsepriteTagStorage(void)
+{
+    for (unsigned int i = 0; i < aseprite_tag_storage.current_aseprite_tag; ++i) {
+        DynamicString *string = GetDataFromDynamicArray(&aseprite_tag_storage.names, i);
+        DestroyString(string);
+    }
+    DestroyDynamicArray(&aseprite_tag_storage.aseprite_tags);
+    DestroyDynamicArray(&aseprite_tag_storage.names);
+}
+
+static void DestroyFontStorage(void)
+{
+    for (unsigned int i = 0; i < font_storage.current_font; ++i) {
+        Font          *font   = GetDataFromDynamicArray(&font_storage.fonts, i);
+        DynamicString *string = GetDataFromDynamicArray(&font_storage.names, i);
+        
+        UnloadFont(*font);
+        DestroyString(string);
+    }
+    DestroyDynamicArray(&font_storage.fonts);
+    DestroyDynamicArray(&font_storage.names);
+}
