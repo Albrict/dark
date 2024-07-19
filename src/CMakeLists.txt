@@ -8,4 +8,5 @@ target_sources( main PRIVATE
     "resource_manager.c"
     "text_button.c"
     "constants.c"
+    "dynamic_array.c"
     )
