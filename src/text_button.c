@@ -37,11 +37,11 @@ static void UpdateTextButton(void *text_button)
 {
     TextButton *button = (TextButton*)(text_button);
     if (button->is_focus_sound_played == false && button->is_focused) {
-        PlaySound(GetSound("Choose"));
+        PlayInGameSound("Choose");
         button->is_focus_sound_played = true;
     }
     if (button->is_pressed == true) {
-        PlaySound(GetRandomButtonPressSound());
+        PlayRandomPressedButtonSound();
         button->is_pressed = false;
     }
 }

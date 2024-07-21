@@ -4,17 +4,12 @@
 #include <stddef.h>
 #include "dynamic_array.h"
 #include "dynamic_string.h"
+#include "storage.h"
 #include "resource_manager.h"
 
 #define DEFAULT_STORAGE_SIZE 256
 #define MUSIC_STORAGE_SIZE 24
 #define FONT_STORAGE_SIZE 24
-
-typedef struct SoundStorage {
-    DynamicArray sounds;
-    DynamicArray names;
-    unsigned int current_sound;  
-} SoundStorage;
 
 typedef struct AsepriteStorage {
     DynamicArray aseprites;
@@ -41,27 +36,23 @@ typedef struct FontStorage {
 } FontStorage;
 
 static bool InitStorages(void);
-static bool InitSoundStorage(void);
 static bool InitAsepriteStorage(void);
 static bool InitAsepriteTagStorage(void);
 static bool InitMusicStorage(void);
 static bool InitFontStorage(void);
 
 static void DestroyStorages(void);
-static void DestroySoundStorage(void);
 static void DestroyAsepriteStorage(void);
 static void DestroyAsepriteTagStorage(void);
 static void DestroyMusicStorage(void);
 static void DestroyFontStorage(void);
 
-static bool InsertSound(const char *path, const char *name);
 static bool InsertAseprite(const char *path, const char *name);
 static bool InsertAsepriteTag(const Aseprite *aseprite, const int id);
 static bool InsertMusic(const char *path, const char *name);
 static bool InsertFont(const char *path, const char *name);
 
 //static Font                Becker               = {0};
-static SoundStorage       sound_storage        = {0};
 static AsepriteStorage    aseprite_storage     = {0};
 static AsepriteTagStorage aseprite_tag_storage = {0};
 static MusicStorage       music_storage        = {0};
@@ -72,22 +63,6 @@ bool LoadResources(void)
     InitStorages();
     if (InsertFont("assets/fonts/Becker.ttf", "Becker") == false)
         return false;
-    
-    if (InsertSound("assets/sound/ui/choose.wav", "Choose") == false)
-            return false;
-    if (InsertSound("assets/sound/ui/button_pressed.wav", "Pressed") == false)
-            return false; 
-    if (InsertSound("assets/sound/ui/button_pressed2.wav", "Pressed2") == false)
-            return false;
-    if (InsertSound("assets/sound/ui/button_pressed3.wav", "Pressed3") == false)
-            return false;
-    if (InsertSound("assets/sound/ui/ui_discard.wav", "Discard") == false)
-            return false; 
-    if (InsertSound("assets/sound/ui/ui_discard2.wav", "Discard2") == false)
-            return false; 
-    if (InsertSound("assets/sound/ui/ui_discard3.wav", "Discard3") == false)
-            return false; 
-
     return true;
 }
 
@@ -106,33 +81,12 @@ Font GetFont(const char *name)
     return (Font){0};
 }
 
-Sound GetSound(const char *name)
-{
-    for (unsigned int i = 0; i < sound_storage.current_sound; ++i) {
-        DynamicString *string = GetDataFromDynamicArray(&sound_storage.names, i); 
-        if (TextIsEqual(name, GetContents(string)) == true) {
-            Sound *sound = GetDataFromDynamicArray(&sound_storage.sounds, i);
-            return LoadSoundAlias(*sound);
-        }
-    }
-    return (Sound){0};
-}
-
 static bool InitStorages(void)
 {
-    InitSoundStorage();
     InitAsepriteStorage();
     InitAsepriteTagStorage();
     InitMusicStorage();
     InitFontStorage();
-    return true;
-}
-
-static bool InitSoundStorage(void)
-{
-    sound_storage.current_sound = 0;
-    sound_storage.sounds        = CreateDynamicArray(sizeof(Sound), 50);
-    sound_storage.names         = CreateDynamicArray(sizeof(DynamicString), 50);
     return true;
 }
 
@@ -170,24 +124,10 @@ static bool InitFontStorage(void)
 
 static void DestroyStorages(void)
 {
-    DestroySoundStorage();
     DestroyAsepriteStorage();
     DestroyAsepriteTagStorage();
     DestroyMusicStorage();
     DestroyFontStorage();
-}
-
-static bool InsertSound(const char *path, const char *name)
-{
-    Sound sound = LoadSound(path);
-    if (IsSoundReady(sound) == true) {
-        DynamicString string = CreateString(name);
-        PushDataToDynamicArray(&sound_storage.sounds, &sound); 
-        PushDataToDynamicArray(&sound_storage.names, &string);
-        ++sound_storage.current_sound;
-        return true;
-    }
-    return false;
 }
 
 static bool InsertAseprite(const char *path, const char *name)
@@ -245,19 +185,6 @@ static bool InsertFont(const char *path, const char *name)
         return true;
     }
     return false;
-}
-
-static void DestroySoundStorage(void)
-{
-    for (unsigned int i = 0; i < sound_storage.current_sound; ++i) {
-        Sound         *sound  = GetDataFromDynamicArray(&sound_storage.sounds, i);
-        DynamicString *string = GetDataFromDynamicArray(&sound_storage.names, i);
-
-        UnloadSound(*sound);
-        DestroyString(string);
-    }
-    DestroyDynamicArray(&sound_storage.sounds);
-    DestroyDynamicArray(&sound_storage.names);
 }
 
 static void DestroyAsepriteStorage(void)

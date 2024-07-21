@@ -24,7 +24,7 @@ void DestroyString(DynamicString *string)
     string->size = 0;
 }
 
-const char *GetContents(DynamicString *string)
+const char *GetContents(const DynamicString *string)
 {
     if (string->size < SMALL_STRING_BUFFER_SIZE)
         return string->small_string;

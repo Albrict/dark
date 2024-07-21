@@ -4,6 +4,7 @@
 #include "graphics.h"
 #include "main_menu.h"
 #include "resource_manager.h"
+#include "sound.h"
 
 #define MAX_EVENTS 100
 
@@ -28,7 +29,10 @@ bool StartGame(void)
     if (result == false)
         return false;
 
-    InitAudioDevice();
+    result = InitSound();
+    if (result == false)
+        return false;
+
     result = LoadResources();
     if (result == false)
         return false;
@@ -54,7 +58,7 @@ void RunGame(void)
 
 void CloseGame(void)
 {
-    CloseAudioDevice();
+    CloseSound();
     UnloadResources();
     CloseGraphics();
     CloseWindow();

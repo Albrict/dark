@@ -9,5 +9,5 @@ typedef struct DynamicString {
 
 DynamicString CreateString(const char *string);
 void DestroyString(DynamicString *string);
-const char *GetContents(DynamicString *string);
+const char *GetContents(const DynamicString *string);
 void SetContents(DynamicString *string, const char *contents);
