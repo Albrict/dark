@@ -1,12 +1,7 @@
 #pragma once
-#include "resource_manager.h"
+#include <stdbool.h>
 
-static inline Sound GetRandomButtonPressSound(void)
-{
-    Sound sounds[3] = {
-        GetSound("Pressed"),
-        GetSound("Pressed2"),
-        GetSound("Pressed3")
-    };
-    return sounds[GetRandomValue(0, 2)];
-}
+bool InitSound(void);
+void PlayInGameSound(const char *name);
+void PlayRandomPressedButtonSound(void);
+void CloseSound(void);

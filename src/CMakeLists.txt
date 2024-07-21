@@ -10,4 +10,6 @@ target_sources( main PRIVATE
     "constants.c"
     "dynamic_array.c"
     "dynamic_string.c"
+    "storage.c"
+    "sound.c"
     )

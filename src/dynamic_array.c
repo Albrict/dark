@@ -22,7 +22,7 @@ void DestroyDynamicArray(DynamicArray *dynamic_array)
     dynamic_array = NULL;
 }
 
-void *GetDataFromDynamicArray(DynamicArray *dynamic_array, const unsigned int index)
+void *GetDataFromDynamicArray(const DynamicArray *dynamic_array, const unsigned int index)
 {
     assert(index < dynamic_array->size && "GetDataFromDynamicArray: invalid index");
     assert(index <= dynamic_array->current_element);
